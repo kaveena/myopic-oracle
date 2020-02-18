@@ -1,0 +1,13 @@
+net: "/home/user/myopic-oracle/caffe-models/ResNet-20-CIFAR10/masked.prototxt"
+test_iter: 100
+test_interval: 400
+base_lr: 0.001
+momentum: 0.9
+weight_decay: 0.0001
+lr_policy: "fixed"
+display: 100
+max_iter: 20000
+snapshot: 500
+snapshot_prefix: "caffe-snapshots"
+solver_mode: GPU
+test_initialization: true

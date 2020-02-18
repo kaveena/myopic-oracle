@@ -1,0 +1,115 @@
+FROM archlinux/base
+
+RUN pacman-key --refresh-keys
+
+RUN pacman --quiet --noconfirm -Syyu base base-devel bind-tools git doxygen ghc wget bc gnuplot go python-numpy python-scipy bash-completion cuda nccl
+
+RUN groupadd build
+
+RUN echo "%build ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN echo "MAKEFLAGS=\"-j12\"" >> /etc/makepkg.conf
+
+RUN useradd --create-home --groups build user
+
+WORKDIR /tmp
+
+RUN git clone https://aur.archlinux.org/yay.git
+
+RUN chmod -R a+rw /tmp/yay
+
+USER user
+
+WORKDIR /tmp/yay
+
+RUN makepkg -sfc
+
+USER root
+
+RUN pacman --noconfirm -U yay*.xz
+
+# Install Caffe dependencies
+
+USER user
+
+RUN yes Y | yay -Syy cmake cython gflags google-glog hdf5 ipython jsoncpp libaec libuv protobuf python-gflags python-jedi python-nose python-pandas python-parso python-pexpect python-pickleshare python-prompt_toolkit python-protobuf python-ptyprocess python-pygments python-pytz python-traitlets python-wcwidth python-yaml rhash gcc8
+
+USER root
+
+RUN yes Y | pacman -U https://archive.archlinux.org/packages/b/boost/boost-1.69.0-2-x86_64.pkg.tar.xz https://archive.archlinux.org/packages/b/boost-libs/boost-libs-1.69.0-2-x86_64.pkg.tar.xz
+
+RUN yes Y | pacman -U https://archive.archlinux.org/packages/o/opencv/opencv-4.1.0-2-x86_64.pkg.tar.xz
+
+RUN yes Y | pacman -U https://archive.archlinux.org/packages/l/libdc1394/libdc1394-2.2.6-1-x86_64.pkg.tar.xz
+
+RUN yes Y | pacman -U https://archive.archlinux.org/packages/o/openexr/openexr-2.3.0-1-x86_64.pkg.tar.xz https://archive.archlinux.org/packages/i/ilmbase/ilmbase-2.3.0-1-x86_64.pkg.tar.xz
+
+# Install scikit-learn for dataset management tasks
+
+USER user
+RUN yes Y | yay -Syy python-scikit-image python-imutils gtk3
+
+USER user
+ADD ./caffe/ /home/user/caffe/
+
+ENV PATH="/opt/cuda/bin:${PATH}"
+ENV PYTHONPATH="/usr/python:${PYTHONPATH}"
+
+USER root
+RUN chown -R user:user /home/user/
+
+USER user
+WORKDIR /home/user/caffe/
+RUN mkdir -p build \
+    && cd build \
+    && PATH+=":/opt/cuda/bin/" \
+    CC=gcc-8 \
+    CXX=g++-8 \
+    CMAKE_BUILD_TYPE="Release" \
+    CMAKE_PARALLEL_LEVEL=`grep processor /proc/cpuinfo | wc -l` \
+    cmake \
+    -DCPU_ONLY=OFF \
+    -DUSE_NCCL=ON \
+    -DUSE_CUDNN=OFF \
+    -DBUILD_tools=ON \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_python=ON \
+    -DBUILD_matlab=OFF \
+    -DBUILD_docs=OFF \
+    -DBUILD_python_layer=ON \
+    -DUSE_OPENCV=ON \
+    -DUSE_LEVELDB=OFF \
+    -DUSE_LMDB=OFF \
+    -DUSE_HDF5=ON \
+    -DALLOW_LMDB_NOLOCK=OFF \
+    -DUSE_OPENMP=ON \
+    -DBLAS=CBLAS \
+    -D python_version=3 \
+    -DCMAKE_INSTALL_PREFIX:PATH=${pkgdir}/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    .. \
+    && PATH+=":/opt/cuda/bin" CC=gcc-8 CXX=g++-8 make -j`grep processor /proc/cpuinfo | wc -l` clean caffe caffeproto pycaffe python upgrade_net_proto_text upgrade_net_proto_binary
+
+USER user
+RUN yes Y | yay -Syy python35
+RUN pip3.5 install scikit-learn==0.19.2 --user
+RUN pip3.5 install opencv-python==4.2.0.32 --user
+RUN pip3.5 install scipy==1.4.1 --user
+
+USER user
+ADD ./caffe-cifar-10-training/ /home/user/caffe-cifar-10-training/
+USER root
+RUN chown -R user:user /home/user/
+USER user
+WORKDIR /home/user/caffe-cifar-10-training/
+RUN python3.5 get.py
+
+ENV PYTHONPATH="/home/user/caffe/python/:${PYTHONPATH}"
+
+USER user
+ADD ./myopic-oracle/ /home/user/myopic-oracle/
+USER root
+RUN chown -R user:user /home/user/
+USER user
+WORKDIR /home/user/myopic-oracle/
+RUN cp ~/caffe-cifar-10-training/data/*.txt ./caffe-training-data/
