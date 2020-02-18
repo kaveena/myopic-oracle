@@ -5,18 +5,10 @@ import argparse
 
 colors = [
 '#b2df8a',
-'#d500ab',
-'#00ffd5',
-'#a6cee3',
-'#1f78b4',
 '#ffa2d1',
-'#099981',
 '#ff0000',
-'#fdbf6f',
-'#ff7f00',
-'#d5d500',
-'#6a3d9a',
-'#b15928'
+'#1f78b4',
+'#6a3d9a'
 ]
 
 y_min=5
@@ -68,19 +60,13 @@ saliency_name = {
     'myopic_oracle' : 'Myopic oracle (our method)'
 }
 
-def get_linestyle(saliency):
-  if saliency == "ACTIVATION-AVG-L1-l0_norm_adjusted":
-    return linestyle_dict['dashdotted']
-  elif saliency == "ACTIVATION-TAYLOR-ABS_SUM-l0_norm_adjusted":
-    return 'dashed'
-  elif saliency == "ACTIVATION-TAYLOR-SQR_SUM-no_normalisation":
-    return 'dotted'
-  elif saliency == "WEIGHT-AVG-L2-l0_norm_adjusted":
-    return 'dashdot'
-  elif saliency == "ACTIVATION-DIFF_AVG-ABS_SUM-l0_norm_adjusted":
-    return linestyle_dict['dashdotdotted']
-  else:
-    return 'dashed'
+linestyles = {
+    'MEAN_ACTIVATIONS': linestyle_dict['dashdotted'],
+    '1ST_ORDER_TAYLOR': 'dashed',
+    'FISHER_INFO': 'dotted',
+    'MEAN_GRADIENTS': linestyle_dict['dashdotdotted'],
+    'MEAN_SQR_WEIGHTS': 'dashdot'
+}
 
 args = parser().parse_args()
 
@@ -88,7 +74,7 @@ test_intervals = {'LeNet-5': 1, 'CIFAR10': 1, 'NIN': 10, 'ResNet-20': 1, 'AlexNe
 test_interval = test_intervals[args.arch]
 initial_test_accuracies = {'LeNet-5': 69.2, 'CIFAR10': 72.82, 'NIN': 88.18, 'ResNet-20': 88.39, 'AlexNet': 84.23}
 initial_test_acc = initial_test_accuracies[args.arch]
-savedir = args.arch
+savedir = args.arch + '-CIFAR10'
 
 individual_saliencies='MEAN_ACTIVATIONS,1ST_ORDER_TAYLOR,FISHER_INFO,MEAN_GRADIENTS,MEAN_SQR_WEIGHTS'
 
@@ -112,7 +98,7 @@ k = args.k
 # individual saliencies
 for i_s in range(len(saliencies)):
     for j in range(1,iterations+1):
-      dict_ = dict(np.load('/data/' + savedir + '/individual_saliencies/summary__' + saliencies[i_s] + '_evalsize' + str(eval_size) + '_iter' + str(j) + '.npy', allow_pickle=True).item())
+      dict_ = dict(np.load('/data/' + savedir + '/individual_saliencies/summary_' + saliencies[i_s] + '_evalsize' + str(eval_size) + '_iter' + str(j) + '.npy', allow_pickle=True).item())
       y_inter = scipy.interpolate.interp1d(np.hstack([0.0, 100.0 * (1-(dict_['conv_param'][::test_interval]/dict_['initial_conv_param'])), 100.0]), np.hstack([initial_test_acc, dict_['test_acc'][::test_interval], 10.0]))(x_signals)
       y_mean[i_s] += y_inter
       y_sqr_mean[i_s] += y_inter**2
@@ -124,7 +110,7 @@ y_std = y_std**0.5
 
 # myopic oracle 
 for j in range(1,iterations+1):
-  dict_ = dict(np.load('/data/' + savedir + '/myopic_oracle/summary__MYOPIC_ORACLE_evalsize' + str(eval_size) + '_oracleevalsize' + str(oracle_eval_size) + '_k' + str(k) + '_iter' + str(j) + '.npy', allow_pickle=True).item())
+  dict_ = dict(np.load('/data/' + savedir + '/myopic_oracle/summary_MYOPIC_ORACLE_evalsize' + str(eval_size) + '_oracleevalsize' + str(oracle_eval_size) + '_k' + str(k) + '_iter' + str(j) + '.npy', allow_pickle=True).item())
   y_inter = scipy.interpolate.interp1d(np.hstack([0.0, 100.0 * (1-(dict_['conv_param'][::test_interval]/dict_['initial_conv_param'])), 100.0]), np.hstack([initial_test_acc, dict_['test_acc'][::test_interval], 10.0]))(x_signals)
   y_myopic_oracle_mean += y_inter
   y_myopic_oracle_sqr_mean += y_inter**2
@@ -158,9 +144,9 @@ print(saliency_name["myopic_oracle"], x_sparsity, '+-', x_error)
 
 fig = plt.figure(figsize=(27*0.4,18*0.4))
 plot = fig.add_subplot(111)
-for saliency in individual_saliencies:
-  i_su = individual_saliencies.index(saliency)
-  plt.plot(x_signals, y_mean[i_su], color=colors[i_su], label=saliency_name[saliency], linestyle=get_linestyle(saliency), linewidth=3.0)
+for saliency in saliencies:
+  i_su = saliencies.index(saliency)
+  plt.plot(x_signals, y_mean[i_su], color=colors[i_su], label=saliency_name[saliency], linestyle=linestyles[saliency], linewidth=3.0)
   plt.fill_between(x_signals, y_mean[i_su] - 2*y_std[i_su], y_mean[i_su] + 2*y_std[i_su], color=colors[i_su], alpha=0.2)
 plt.plot(x_signals, y_myopic_oracle_mean, color='k', label=saliency_name["myopic_oracle"] , linewidth=3.0)
 plt.fill_between(x_signals, y_myopic_oracle_mean - 2*y_myopic_oracle_std, y_myopic_oracle_mean + 2*y_myopic_oracle_std, color='k', alpha=0.2)

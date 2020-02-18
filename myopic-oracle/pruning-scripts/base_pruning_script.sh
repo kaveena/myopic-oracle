@@ -30,7 +30,8 @@ for (( i=1; i<=$iterations; i++ ))
         \--saliencies $saliency 
     fi
   done
-  filename=$default_myopic_oracle_savepath/summary__MYOPIC_ORACLE_evalsize$eval_size\_oracleevalsize$oracle_eval_size\_k$k\_iter$i\.npy
+  filename=$default_myopic_oracle_savepath/summary_MYOPIC_ORACLE_evalsize$eval_size\_oracleevalsize$oracle_eval_size\_k$k\_iter$i\.npy
+  echo $filename
   if [[ ! -e $filename ]] || [[ $force == true ]]
     then
     echo $filename
