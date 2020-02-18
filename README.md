@@ -19,30 +19,40 @@ Requirements:
   * NVIDIA GPU with supported CUDA
   * Linux
   * Docker
+
   Docker needs to be installed see https://docs.docker.com/install/ for details on how to install Docker on your platform.  Your user needs to be added to the docker group to be able to run experiments without root permission.
   * NVIDIA Container Toolkit
-  Install the NVIDIA Container Toolkit and restart your docker service. To check that the GPUs can be access in Docker use:
+
+  Install the NVIDIA Container Toolkit from https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(Native-GPU-Support) and restart your docker service. To check that the GPUs can be access in Docker use:
   ``` 
+  docker run --gpus all nvidia/cuda nvidia-smi
   ```
 
-## Setup environment
+# Setup environment
 
-The Dockerfile.gpu installs all the dependencies for our experiments in the Docker Container.  
-
+The Dockerfile.gpu installs all the dependencies for our experiments in the Docker Container.  Build the Docker Container with from the root directory of the project:
+```
+docker build -t myopic-oracle -f Dockerfile.gpu .
+```
 
 Check that GPUs can be accessed using:
 ```
+docker run --gpus all,capabilities=compute -it myopic-oracle nvidia-smi
 ```
-If there is a driver mismatch error, then you need to uncomment the lines in Dockerfile.gpu that installs a specific version of NVIDIA driver.  Replace the driver version in the format XXX.YY with the NVIDIA driver version found on the host machine. Find the driver version on the host machine using:
+If there is a driver mismatch error `Failed to initialize NVML: Driver/library version mismatch`, then you need to uncomment the lines in Dockerfile.gpu that installs a specific version of NVIDIA driver.  Replace the driver version in the format XXX.YY with the NVIDIA driver version found on the host machine. Find the driver version on the host machine using:
 ```
+cat /proc/driver/nvidia/version
 ```
 Rerun the build process. An error in linux kernel may occur. Change the Linux kernel version to the one from the error message.
 
-## Run experiment
+# Run experiment
 
 The experiments can be started with 
 ```
+docker run --gpus all,capabilities=compute --mount source=$(realpath results),target=/data/,type=bind -it myopic-oracle ./run.sh
 ```
 
-### Results
-The Graphs 
+The experiments can be stopped and restarted at any time with the same command.
+
+# Results
+The results of the experiment are generated in results/Graphs.
