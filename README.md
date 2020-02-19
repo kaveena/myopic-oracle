@@ -43,11 +43,12 @@ If there is a driver mismatch error `Failed to initialize NVML: Driver/library v
 ```
 cat /proc/driver/nvidia/version
 ```
-Rerun the build process. An error in linux kernel may occur. Change the Linux kernel version to the one from the error message.
+Rerun the build process and check that the GPUs are accessible.
 
 # Run experiment
 
-The experiments can be started with 
+
+Once the docker build successfully completes and the GPUs are accessible, the experiments can be started with 
 ```
 docker run --gpus all,capabilities=compute --mount source=$(realpath results),target=/data/,type=bind -it myopic-oracle ./run.sh
 ```
