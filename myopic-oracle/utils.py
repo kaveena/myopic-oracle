@@ -97,11 +97,11 @@ def get_pruning_signals(net, layer, saliencies):
     if saliency == 'MEAN_ACTIVATIONS':
       pruning_signals[i_s] = np.abs(activations).sum(axis=(0,2,3)) / float(activations.shape[0] * activations.shape[2] * activations.shape[3])
     elif saliency == '1ST_ORDER_TAYLOR':
-      pruning_signals[i_s] = np.abs(activations*gradients).sum(axis=(0,2,3)) / float(activations.shape[0] * activations.shape[2] * activations.shape[3])
+      pruning_signals[i_s] = np.abs((activations*gradients).sum(axis=(2,3))).sum(axis=(0)) / float(activations.shape[0] * activations.shape[2] * activations.shape[3])
     elif saliency == 'FISHER_INFO':
-      pruning_signals[i_s] = 0.5*((activations*gradients)**2).sum(axis=(0,2,3)) / float(activations.shape[0] * activations.shape[2] * activations.shape[3])
+      pruning_signals[i_s] = 0.5*((activations*gradients).sum(axis=(2,3))**2).sum(axis=(0)) / float(activations.shape[0])
     elif saliency == 'MEAN_GRADIENTS':
-      pruning_signals[i_s] = np.abs(gradients).sum(axis=(0,2,3)) / float(activations.shape[0] * activations.shape[2] * activations.shape[3])
+      pruning_signals[i_s] = np.abs(gradients.sum(axis=(2,3))).sum(axis=(0)) / float(activations.shape[0] * activations.shape[2] * activations.shape[3])
     elif saliency == 'MEAN_SQR_WEIGHTS':
       pruning_signals[i_s] = (weights**2).sum(axis=(1,2,3)) / float(conv_module.active_input_channels.sum() * conv_module.kernel_size)
     else:

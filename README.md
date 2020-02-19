@@ -55,4 +55,4 @@ docker run --gpus all,capabilities=compute --mount source=$(realpath results),ta
 The experiments can be stopped and restarted at any time with the same command.
 
 # Results
-The results of the experiment are generated in results/Graphs.
+The results of the experiment are generated in results/Graphs.  On a single GTX 1080Ti the experiments for LeNet-5 took about 7min, CIFAR10 about 36min and 18h for ResNet-20.
