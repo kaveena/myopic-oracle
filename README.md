@@ -1,6 +1,6 @@
 # Composition of Saliency Metrics for Channel Pruning with a Myopic Oracle
 
-This code is used to run the experiments and recreate the graphs for the Composition of Saliency Metrics for Channel Pruning with a Myopic Oracle paper submitted to ICML 2020.
+This code is used to run the experiments and recreate the graphs for an early draft of the Composition of Saliency Metrics for Channel Pruning with a Myopic Oracle paper.
 
 N.B. The AlexNet network is not supplied in this zip as it exceeded the file size limit for ICML supplementary material.  All the other networks used in the paper are provided. 
 
