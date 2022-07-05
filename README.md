@@ -2,9 +2,9 @@
 
 This code is used to run the experiments and recreate the graphs for an early draft of the Composition of Saliency Metrics for Channel Pruning with a Myopic Oracle paper.
 
-N.B. The AlexNet network is not supplied in this zip as it exceeded the file size limit for ICML supplementary material.  All the other networks used in the paper are provided. 
+N.B. The AlexNet network is not provided.
 
-# Contents of the zip
+# Contents of the repo
   * Source code of modified Caffe with helpers for channel pruning
   * Python script to download and extract the CIFAR-10 dataset
   * Trained Caffemodels for LeNet-5, CIFAR10, NIN and ResNet-20 on the CIFAR-10 dataset
